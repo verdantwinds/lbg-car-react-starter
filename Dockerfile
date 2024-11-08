@@ -1,32 +1,29 @@
-# Stage 1: Build the React application
+# Build stage
 FROM node:18-alpine as build
 
+# Install yarn
+RUN apk add --no-cache yarn
+
 # Set working directory
-WORKDIR /src
+WORKDIR /app
 
 # Copy package files
-COPY package.json package-lock.json ./
+COPY package.json yarn.lock ./
 
 # Install dependencies
-RUN npm ci
+RUN yarn install --frozen-lockfile
 
 # Copy the rest of the application code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN yarn build
 
-# Stage 2: Serve the built application
-FROM nginx:alpine
-
-# Copy the build output from previous stage
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Copy custom nginx config if you have one
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Install serve globally
+RUN yarn global add serve
 
 # Expose port 80
 EXPOSE 80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start the application using serve
+CMD ["serve", "-s", "build", "-l", "3000"]
